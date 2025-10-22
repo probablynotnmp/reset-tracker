@@ -37,18 +37,13 @@
     }
     body.dark .card{background:var(--card-dark);color:var(--text-dark);}
 
-    .week-wrapper{position:relative;width:100%;height:auto;overflow:hidden;}
-    .week{position:absolute;top:0;left:0;width:100%;opacity:0;transform:scale(.9);transition:all .4s ease;}
-    .week.active{opacity:1;transform:scale(1);z-index:2;}
+    .week-wrapper{position:relative;width:100%;min-height:260px;overflow:visible;}
+    .week{position:absolute;top:0;left:0;width:100%;opacity:0;transform:scale(.92) translateY(8px);transition:transform .35s ease, opacity .35s ease;pointer-events:none;}
+    .week.active{opacity:1;transform:scale(1) translateY(0);z-index:5;pointer-events:auto;}
 
-    .nav-arrow{
-      position:absolute;top:50%;transform:translateY(-50%);
-      font-size:1.5rem;background:var(--accent);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 10px rgba(0,0,0,.2);
-    }
-    .nav-arrow.left{left:-1.5rem;}
-    .nav-arrow.right{right:-1.5rem;}
+    .nav-arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:1.25rem;background:var(--accent);color:#fff;border:none;border-radius:50%;width:2.4rem;height:2.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.2);z-index:10;opacity:.95;}
+    .nav-arrow.left{left:-1.1rem;}
+    .nav-arrow.right{right:-1.1rem;}
 
     .day{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px dashed #ddd;}
     input[type=checkbox]{transform:scale(1.2);accent-color:var(--accent);}
@@ -78,20 +73,38 @@
   </div>
 
   <div class="card">
-    <h1>3-Week Tracker</h1>
+    <h1>3‑Week Tracker</h1>
     <p class="subtitle" id="welcomeText"></p>
 
-    <div class="week-wrapper">
-      <button class="nav-arrow left" id="prevWeek">◀</button>
-      <button class="nav-arrow right" id="nextWeek">▶</button>
+    <div class="week-wrapper" id="weeks">
+      <button class="nav-arrow left" id="prevWeek" aria-label="Previous week">◀</button>
+      <button class="nav-arrow right" id="nextWeek" aria-label="Next week">▶</button>
 
-      <div class="week active" id="week1">
+      <div class="week active" id="week1" data-week="0">
         <h2>Week 1 — Clear the Noise</h2>
         <div class="day"><span>Delete Instagram & log your feeling</span><input type="checkbox"></div>
         <div class="day"><span>Morning walk & Notes journal</span><input type="checkbox"></div>
         <div class="day"><span>Productive hour (portfolio/code)</span><input type="checkbox"></div>
         <div class="day"><span>No phone 30 mins before bed</span><input type="checkbox"></div>
       </div>
+
+      <div class="week" id="week2" data-week="1">
+        <h2>Week 2 — Start Moving</h2>
+        <div class="day"><span>Declutter your phone home screen</span><input type="checkbox"></div>
+        <div class="day"><span>Deep work 1hr</span><input type="checkbox"></div>
+        <div class="day"><span>Apply to one job</span><input type="checkbox"></div>
+        <div class="day"><span>Reflect and rest</span><input type="checkbox"></div>
+      </div>
+
+      <div class="week" id="week3" data-week="2">
+        <h2>Week 3 — Build Momentum</h2>
+        <div class="day"><span>Reach out to a mentor</span><input type="checkbox"></div>
+        <div class="day"><span>Post one project update</span><input type="checkbox"></div>
+        <div class="day"><span>Plan next steps</span><input type="checkbox"></div>
+        <div class="day"><span>Celebrate your progress</span><input type="checkbox"></div>
+      </div>
+    </div>
+  </div>
 
       <div class="week" id="week2">
         <h2>Week 2 — Start Moving</h2>
@@ -116,62 +129,60 @@
   <script>
     const nameKey = 'tracker_name';
     const themeKey = 'tracker_theme';
-    const progressKey = 'tracker_progress';
-    const quotes = [
-      'Tiny steps every day.',
-      'Progress, not perfection.',
-      'Consistency creates change.',
-      'You are your only competition.',
-      'Start small, stay steady.'
-    ];
+    const progressKey = 'tracker_progress_v2';
+    const weekIndexKey = 'tracker_week_index';
+    const quotes = ['Tiny steps every day.','Progress, not perfection.','Consistency creates change.','You are your only competition.','Start small, stay steady.'];
 
+    // Loading quote
     const loading = document.getElementById('loading');
     document.getElementById('quote').textContent = quotes[Math.floor(Math.random()*quotes.length)];
+    window.addEventListener('load', ()=> setTimeout(()=> loading.classList.add('hidden'), 900));
 
-    window.addEventListener('load', ()=> setTimeout(()=> loading.classList.add('hidden'), 1500));
-
-    // Name prompt
+    // Ask name once
     let user = localStorage.getItem(nameKey);
-    if(!user){
-      user = prompt('What’s your name?');
-      localStorage.setItem(nameKey, user);
-    }
+    if(!user){ user = prompt('What’s your name?') || 'Friend'; localStorage.setItem(nameKey, user); }
     document.getElementById('welcomeText').textContent = `Hey ${user} ✨`;
 
-    // Week navigation
-    const weeks = document.querySelectorAll('.week');
-    let index = 0;
-    const showWeek = (i) => {
-      weeks.forEach((w,idx)=> w.classList.toggle('active', idx===i));
-    };
-    document.getElementById('prevWeek').onclick = ()=>{
-      index = (index - 1 + weeks.length) % weeks.length;
-      showWeek(index);
-    };
-    document.getElementById('nextWeek').onclick = ()=>{
-      index = (index + 1) % weeks.length;
-      showWeek(index);
-    };
-
-    // Theme toggle
+    // Theme toggle with sound
     const themeBtn = document.getElementById('theme-toggle');
-    const tim = new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg');
-    const tum = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+    const sDark = new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg');
+    const sLight = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+    const setTheme = (dark)=>{ document.body.classList.toggle('dark', dark); themeBtn.textContent = dark ? '☀️' : '🌙'; localStorage.setItem(themeKey, dark?'dark':'light'); };
+    const savedTheme = localStorage.getItem(themeKey); if(savedTheme==='dark') setTheme(true);
+    themeBtn.addEventListener('click', ()=>{ const toDark = !document.body.classList.contains('dark'); setTheme(toDark); (toDark?sDark:sLight).play(); });
 
-    const setTheme = (dark) => {
-      document.body.classList.toggle('dark', dark);
-      themeBtn.textContent = dark ? '☀️' : '🌙';
-      localStorage.setItem(themeKey, dark ? 'dark' : 'light');
-    };
-    themeBtn.onclick = () => {
-      const dark = !document.body.classList.contains('dark');
-      setTheme(dark);
-      (dark?tim:tum).play();
-    };
+    // Weeks and navigation + stack animation
+    const wrapper = document.getElementById('weeks');
+    const weeks = Array.from(document.querySelectorAll('.week'));
+    let index = parseInt(localStorage.getItem(weekIndexKey) || '0', 10);
+    function layout(){ // stack effect and wrapper height
+      weeks.forEach((w,i)=>{
+        const delta = (i - index + weeks.length) % weeks.length; // 0 active, 1 next, 2 next-next
+        w.classList.toggle('active', i===index);
+        let tX=0, s=.92, rot=0, z=1, y=8;
+        if(delta===0){ tX=0; s=1; rot=0; z=5; y=0; }
+        else if(delta===1){ tX=18; s=.96; rot=3; z=3; y=6; }
+        else { tX=32; s=.92; rot=6; z=1; y=8; }
+        w.style.transform = `translateX(${tX}px) translateY(${y}px) scale(${s}) rotate(${rot}deg)`;
+        w.style.opacity = (delta===0)?1:.65;
+        w.style.zIndex = z;
+      });
+      const activeH = weeks[index].offsetHeight; wrapper.style.minHeight = activeH + 20 + 'px';
+      localStorage.setItem(weekIndexKey, String(index));
+    }
+    layout();
+    document.getElementById('prevWeek').onclick = ()=>{ index = (index - 1 + weeks.length) % weeks.length; layout(); };
+    document.getElementById('nextWeek').onclick = ()=>{ index = (index + 1) % weeks.length; layout(); };
 
-    // Load saved theme
-    const savedTheme = localStorage.getItem(themeKey);
-    if(savedTheme==='dark') setTheme(true);
+    // Persist checkbox progress per week
+    function loadProgress(){ try{ return JSON.parse(localStorage.getItem(progressKey)) || [[],[],[]]; }catch(e){ return [[],[],[]]; } }
+    function saveProgress(data){ localStorage.setItem(progressKey, JSON.stringify(data)); }
+    const progress = loadProgress();
+    weeks.forEach((w,wi)=>{
+      const boxes = Array.from(w.querySelectorAll('input[type="checkbox"]'));
+      // restore
+      boxes.forEach((b,bi)=>{ b.checked = !!progress[wi][bi]; b.addEventListener('change', ()=>{ progress[wi][bi] = b.checked; saveProgress(progress); }); });
+    });
   </script>
 </body>
 </html>
