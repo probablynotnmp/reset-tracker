@@ -3,229 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prathyush's Tracker</title>
+  <title>3-Week Tracker</title>
   <style>
     :root{
-      --bg1:#fef9f3;
-      --bg2:#f3f7ff;
-      --card:#ffffff;
-      --ink:#1f2937;
-      --muted:#6b7280;
-      --accent:#7c3aed;
-      --accent-2:#22c55e;
-      --ring: rgba(124,58,237,.25);
+      --bg-light: #f7f5f9;
+      --bg-dark: #111827;
+      --card-light: #ffffff;
+      --card-dark: #1f2937;
+      --text-light: #1f2937;
+      --text-dark: #f9fafb;
+      --accent: #8b5cf6;
+      --muted: #6b7280;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box;transition:background .3s,color .3s;}
     body {
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 10% 10%, var(--bg2), transparent),
-                  radial-gradient(1200px 800px at 90% 20%, #fff0f8, transparent),
-                  linear-gradient(135deg, var(--bg1), #fafafa);
-      color: var(--ink);
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-      min-height: 100vh; padding: 2rem;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:100vh;overflow-x:hidden;margin:0;padding:2rem;
     }
-    h1 { font-size: 2rem; margin-bottom: .25rem; }
-    p.subtitle { font-size: 1rem; color: var(--muted); margin-bottom: 1.25rem; }
+    body.dark{background:var(--bg-dark);color:var(--text-dark);}
 
-    .header-card{
-      width:100%; max-width: 600px; background: var(--card); border-radius: 18px; padding: 1rem 1.25rem;
-      box-shadow: 0 8px 30px rgba(17,24,39,.06);
-      display:flex; align-items:center; gap:.75rem; margin-bottom:1rem;
+    h1 {font-size:2rem;margin:0.5rem 0;}
+    p.subtitle{color:var(--muted);margin-bottom:1rem;}
+
+    .card{
+      position:relative;
+      width:90%;max-width:600px;height:auto;
+      background:var(--card-light);color:var(--text-light);
+      border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.1);
+      padding:1.5rem;
     }
-    .pill{
-      border:1px solid #e5e7eb; padding:.25rem .6rem; border-radius:999px; font-size:.8rem; color:var(--muted);
+    body.dark .card{background:var(--card-dark);color:var(--text-dark);}
+
+    .week-wrapper{position:relative;width:100%;height:auto;overflow:hidden;}
+    .week{position:absolute;top:0;left:0;width:100%;opacity:0;transform:scale(.9);transition:all .4s ease;}
+    .week.active{opacity:1;transform:scale(1);z-index:2;}
+
+    .nav-arrow{
+      position:absolute;top:50%;transform:translateY(-50%);
+      font-size:1.5rem;background:var(--accent);color:#fff;border:none;border-radius:50%;width:2.2rem;height:2.2rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 10px rgba(0,0,0,.2);
     }
+    .nav-arrow.left{left:-1.5rem;}
+    .nav-arrow.right{right:-1.5rem;}
 
-    .week {
-      background: var(--card); border-radius: 18px; box-shadow: 0 8px 30px rgba(17,24,39,.06);
-      padding: 1rem 1.25rem; margin-bottom: 1.25rem; width: 100%; max-width: 600px;
+    .day{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px dashed #ddd;}
+    input[type=checkbox]{transform:scale(1.2);accent-color:var(--accent);}
+
+    #theme-toggle{
+      position:fixed;bottom:1rem;right:1rem;background:var(--card-light);
+      border:none;border-radius:50%;width:3rem;height:3rem;cursor:pointer;
+      box-shadow:0 4px 15px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;
     }
-    .week h2{ margin: .25rem 0 0.5rem; font-size:1.05rem; color:#374151; }
+    body.dark #theme-toggle{background:var(--card-dark);}
 
-    .progress{ height:10px; background:#eef2ff; border-radius:999px; overflow:hidden; margin:.5rem 0 1rem; }
-    .progress > span{ display:block; height:100%; width:0%; background: linear-gradient(90deg, var(--accent), #a78bfa); transition: width .25s ease; }
-
-    .day { display:flex; align-items:center; gap:1rem; border-bottom: 1px dashed #e5e7eb; padding:.7rem 0; }
-    .day:last-child { border-bottom: none; }
-    .task{ flex:1; }
-    .day input[type="checkbox"]{ margin-left:auto; transform: scale(1.25); accent-color: var(--accent); cursor:pointer; }
-
-    .note { margin-top: 1rem; width: 100%; max-width: 600px; }
-
-    textarea {
-      width: 100%; height: 120px; border-radius: 14px; border: 1px solid #e5e7eb; padding: 1rem; font-family: inherit; font-size: 1rem; resize: none;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,.04);
-    }
-
-    .note-controls { display:flex; align-items:center; justify-content: space-between; gap: 1rem; margin-top:.6rem; }
-    .btn { background: var(--ink); color:#fff; border:none; padding:.6rem 1rem; border-radius: 12px; cursor:pointer; font-weight:600; box-shadow: 0 6px 14px rgba(17,24,39,.08); }
-    .btn.secondary { background:#4b5563; }
-    .btn:focus{ outline:2px solid var(--ring); outline-offset:2px; }
-
-    .notes-grid { margin-top: .75rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:.75rem; width:100%; max-width:600px; }
-    .note-card { background:#fffef8; border:1px solid #f1e9bd; border-radius: 14px; padding:.8rem .9rem; box-shadow: 0 6px 12px rgba(0,0,0,.06); position:relative; white-space: pre-wrap; }
-    .note-meta { font-size:.8rem; color:#6b7280; margin-bottom:.35rem; }
-    .delete { position:absolute; top:8px; right:8px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:.15rem .45rem; font-size:.8rem; cursor:pointer; }
-    .char-count { font-size:.85rem; color:#6b7280; margin-left:auto; }
-
-    footer{ margin-top:1.25rem; color:var(--muted); font-size:.9rem; }
+    .loading{
+      position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-light);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;
+      transition:opacity .5s ease;}
+    .loading.hidden{opacity:0;pointer-events:none;}
+    body.dark .loading{background:var(--bg-dark);}
+    .progressbar{width:200px;height:6px;background:#ddd;border-radius:5px;overflow:hidden;margin-top:1rem;}
+    .progressbar span{display:block;width:0;height:100%;background:var(--accent);animation:loadbar 2s linear infinite;}
+    @keyframes loadbar{0%{width:0;}50%{width:100%;}100%{width:0;}}
   </style>
 </head>
 <body>
-  <div class="header-card">
-    <div class="pill">Hey Prathyush ✨</div>
-    <div class="pill" id="todayTag"></div>
-    <div class="pill" id="streakTag">Streak: 0</div>
-  </div>
-  <h1>Prathyush's 2‑Week Reset Tracker</h1>
-  <p class="subtitle">Tiny wins. Big comeback.</p>
-
-  <div class="week">
-    <h2>Week 1 — Clear the Noise</h2>
-    <div class="progress"><span id="progressBar"></span></div>
-    <div class="day"><div class="task">Day 1 — Delete Instagram & log your feeling</div><input type="checkbox" data-idx="0"></div>
-    <div class="day"><div class="task">Day 2 — Morning walk & Notes journal</div><input type="checkbox" data-idx="1"></div>
-    <div class="day"><div class="task">Day 3 — Productive hour (portfolio/code)</div><input type="checkbox" data-idx="2"></div>
-    <div class="day"><div class="task">Day 4 — No phone 30 mins before bed</div><input type="checkbox" data-idx="3"></div>
-    <div class="day"><div class="task">Day 5 — Write your reflections</div><input type="checkbox" data-idx="4"></div>
-    <div class="day"><div class="task">Day 6 — Social detox (no scroll day)</div><input type="checkbox" data-idx="5"></div>
-    <div class="day"><div class="task">Day 7 — Reward yourself (music, rest, treat)</div><input type="checkbox" data-idx="6"></div>
+  <div class="loading" id="loading">
+    <h2 id="quote">Loading...</h2>
+    <div class="progressbar"><span></span></div>
   </div>
 
-  <div class="note">
-    <h3>Daily Reflection</h3>
-    <textarea id="reflection" placeholder="How did today feel? What was difficult or peaceful about it?"></textarea>
-    <div class="note-controls">
-      <button id="saveBtn" class="btn">Save Reflection</button>
-      <button id="clearTodayBtn" class="btn secondary">Clear</button>
-      <span id="charCount" class="char-count">0 chars</span>
+  <div class="card">
+    <h1>3-Week Tracker</h1>
+    <p class="subtitle" id="welcomeText"></p>
+
+    <div class="week-wrapper">
+      <button class="nav-arrow left" id="prevWeek">◀</button>
+      <button class="nav-arrow right" id="nextWeek">▶</button>
+
+      <div class="week active" id="week1">
+        <h2>Week 1 — Clear the Noise</h2>
+        <div class="day"><span>Delete Instagram & log your feeling</span><input type="checkbox"></div>
+        <div class="day"><span>Morning walk & Notes journal</span><input type="checkbox"></div>
+        <div class="day"><span>Productive hour (portfolio/code)</span><input type="checkbox"></div>
+        <div class="day"><span>No phone 30 mins before bed</span><input type="checkbox"></div>
+      </div>
+
+      <div class="week" id="week2">
+        <h2>Week 2 — Start Moving</h2>
+        <div class="day"><span>Declutter your phone home screen</span><input type="checkbox"></div>
+        <div class="day"><span>Deep work 1hr</span><input type="checkbox"></div>
+        <div class="day"><span>Apply to one job</span><input type="checkbox"></div>
+        <div class="day"><span>Reflect and rest</span><input type="checkbox"></div>
+      </div>
+
+      <div class="week" id="week3">
+        <h2>Week 3 — Build Momentum</h2>
+        <div class="day"><span>Reach out to a mentor</span><input type="checkbox"></div>
+        <div class="day"><span>Post one project update</span><input type="checkbox"></div>
+        <div class="day"><span>Plan next steps</span><input type="checkbox"></div>
+        <div class="day"><span>Celebrate your progress</span><input type="checkbox"></div>
+      </div>
     </div>
   </div>
 
-  <div class="note" style="margin-top:1rem;">
-    <h3>Saved Notes</h3>
-    <div id="notesGrid" class="notes-grid"></div>
-  </div>
+  <button id="theme-toggle">🌙</button>
 
   <script>
-    (function(){
-      const KEY = 'pnm_reset_reflections_v1';
-      const CHECK_KEY = 'pnm_reset_week1_v1';
-      const STREAK_KEY = 'pnm_reset_streak_v1';
-      const textarea = document.getElementById('reflection');
-      const saveBtn = document.getElementById('saveBtn');
-      const clearBtn = document.getElementById('clearTodayBtn');
-      const grid = document.getElementById('notesGrid');
-      const charCount = document.getElementById('charCount');
+    const nameKey = 'tracker_name';
+    const themeKey = 'tracker_theme';
+    const progressKey = 'tracker_progress';
+    const quotes = [
+      'Tiny steps every day.',
+      'Progress, not perfection.',
+      'Consistency creates change.',
+      'You are your only competition.',
+      'Start small, stay steady.'
+    ];
 
-      const read = () => {
-        try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-        catch(e){ return []; }
-      };
+    const loading = document.getElementById('loading');
+    document.getElementById('quote').textContent = quotes[Math.floor(Math.random()*quotes.length)];
 
-      const write = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+    window.addEventListener('load', ()=> setTimeout(()=> loading.classList.add('hidden'), 1500));
 
-      const fmt = (iso) => new Date(iso).toLocaleString('en-IN', {
-        year: 'numeric', month: 'short', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      });
+    // Name prompt
+    let user = localStorage.getItem(nameKey);
+    if(!user){
+      user = prompt('What’s your name?');
+      localStorage.setItem(nameKey, user);
+    }
+    document.getElementById('welcomeText').textContent = `Hey ${user} ✨`;
 
-      const render = () => {
-        const notes = read().sort((a,b)=> new Date(b.ts)-new Date(a.ts));
-        grid.innerHTML = notes.map((n, idx) => `
-          <div class="note-card" data-id="${n.id}">
-            <div class="note-meta">${fmt(n.ts)}</div>
-            <div>${(n.text || '').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>
-            <button class="delete" title="Delete">✕</button>
-          </div>
-        `).join('');
-      };
+    // Week navigation
+    const weeks = document.querySelectorAll('.week');
+    let index = 0;
+    const showWeek = (i) => {
+      weeks.forEach((w,idx)=> w.classList.toggle('active', idx===i));
+    };
+    document.getElementById('prevWeek').onclick = ()=>{
+      index = (index - 1 + weeks.length) % weeks.length;
+      showWeek(index);
+    };
+    document.getElementById('nextWeek').onclick = ()=>{
+      index = (index + 1) % weeks.length;
+      showWeek(index);
+    };
 
-      const save = () => {
-        const text = (textarea.value || '').trim();
-        if(!text) return;
-        const notes = read();
-        notes.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), ts: new Date().toISOString(), text });
-        write(notes);
-        textarea.value = '';
-        updateCount();
-        render();
-      };
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    const tim = new Audio('https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg');
+    const tum = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
 
-      const remove = (id) => {
-        const notes = read().filter(n => n.id !== id);
-        write(notes);
-        render();
-      };
+    const setTheme = (dark) => {
+      document.body.classList.toggle('dark', dark);
+      themeBtn.textContent = dark ? '☀️' : '🌙';
+      localStorage.setItem(themeKey, dark ? 'dark' : 'light');
+    };
+    themeBtn.onclick = () => {
+      const dark = !document.body.classList.contains('dark');
+      setTheme(dark);
+      (dark?tim:tum).play();
+    };
 
-      const updateCount = () => {
-        charCount.textContent = (textarea.value || '').length + ' chars';
-      };
-
-      // Events
-      saveBtn.addEventListener('click', save);
-      clearBtn.addEventListener('click', () => { textarea.value=''; updateCount(); });
-      textarea.addEventListener('input', updateCount);
-      grid.addEventListener('click', (e)=>{
-        const btn = e.target.closest('.delete');
-        if(!btn) return;
-        const card = btn.closest('.note-card');
-        remove(card.getAttribute('data-id'));
-      });
-
-      // Keyboard shortcut: Cmd/Ctrl+S to save
-      window.addEventListener('keydown', (e)=>{
-        if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){
-          e.preventDefault();
-          save();
-        }
-      });
-
-      // Checklist state
-      const boxes = Array.from(document.querySelectorAll('.day input[type="checkbox"]'));
-      const readChecks = () => { try { return JSON.parse(localStorage.getItem(CHECK_KEY)) || Array(boxes.length).fill(false);} catch(e){return Array(boxes.length).fill(false)} };
-      const writeChecks = (arr) => localStorage.setItem(CHECK_KEY, JSON.stringify(arr));
-      const setProgress = (arr) => { const done = arr.filter(Boolean).length; document.getElementById('progressBar').style.width = Math.round(done/arr.length*100) + '%'; };
-
-      const checks = readChecks();
-      boxes.forEach((b,i)=>{ b.checked = !!checks[i]; b.addEventListener('change',()=>{ checks[i] = b.checked; writeChecks(checks); setProgress(checks); celebrateIfAll(checks); updateStreakTag(); });});
-      setProgress(checks);
-
-      // Header tags
-      const todayTag = document.getElementById('todayTag');
-      todayTag.textContent = new Date().toLocaleDateString('en-IN', { weekday:'short', day:'2-digit', month:'short'});
-
-      // Streak logic (counts days with any activity)
-      const streakTag = document.getElementById('streakTag');
-      const todayKey = new Date().toISOString().slice(0,10);
-      const streakData = JSON.parse(localStorage.getItem(STREAK_KEY) || '{}');
-      function updateStreakTag(){
-        streakTag.textContent = 'Streak: ' + (streakData.count || 0);
-      }
-      function markActiveToday(){
-        if(streakData.last === todayKey) return; // already counted today
-        const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
-        streakData.count = (streakData.last === yesterday) ? (streakData.count||0)+1 : Math.max(1, (streakData.count||0));
-        streakData.last = todayKey; localStorage.setItem(STREAK_KEY, JSON.stringify(streakData)); updateStreakTag();
-      }
-      [saveBtn, ...boxes].forEach(el=> el.addEventListener('click', markActiveToday));
-      updateStreakTag();
-
-      // Confetti lite when all done
-      function celebrateIfAll(arr){ if(arr.every(Boolean)){ confetti(); } }
-      function confetti(){
-        const emojis = ['✨','🎉','💜','🌈','⭐'];
-        for(let i=0;i<22;i++){
-          const s=document.createElement('div'); s.textContent=emojis[i%emojis.length]; s.style.position='fixed'; s.style.left=Math.random()*100+'%'; s.style.top='-10px'; s.style.fontSize=(16+Math.random()*18)+'px'; s.style.transition='transform 1.2s ease, opacity 1.2s ease'; document.body.appendChild(s);
-          requestAnimationFrame(()=>{ s.style.transform=`translateY(${80+Math.random()*120}vh) rotate(${Math.random()*360}deg)`; s.style.opacity='0'; }); setTimeout(()=>s.remove(), 1400);
-        }
-      }
-
-      // Initial render
-      updateCount();
-      render();
-    })();
+    // Load saved theme
+    const savedTheme = localStorage.getItem(themeKey);
+    if(savedTheme==='dark') setTheme(true);
   </script>
 </body>
 </html>
